@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Workout to FIT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: two panels — the note on the left, the watch's step list on the right; stacks on phones. */
+  :root {
+    --bg: #eef1ee; --panel: #fbfcfb; --fg: #18201c; --muted: #5b6a62; --line: #d5ddd8;
+    --accent: #0f7a52; --accent-fg: #ffffff; --rest: #e6ece8; --repeat: #0f7a52;
+    --warn-bg: #fbf1d6; --warn-fg: #6d4f00; --field: #f4f7f5;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101513; --panel: #171d1a; --fg: #e4ebe7; --muted: #94a59c; --line: #2a332e;
+      --accent: #3fc48d; --accent-fg: #07130d; --rest: #1d2521; --repeat: #5fd3a2;
+      --warn-bg: #352b10; --warn-fg: #f3d27c; --field: #121815; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101513; --panel: #171d1a; --fg: #e4ebe7; --muted: #94a59c; --line: #2a332e;
+    --accent: #3fc48d; --accent-fg: #07130d; --rest: #1d2521; --repeat: #5fd3a2;
+    --warn-bg: #352b10; --warn-fg: #f3d27c; --field: #121815; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); }
+  main { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 48px; display: grid; gap: 20px; }
+  header h1 { font: 700 34px/1 var(--display); letter-spacing: .01em; text-transform: uppercase; margin: 0 0 6px; text-wrap: balance; }
+  header p { color: var(--muted); margin: 0; max-width: 62ch; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; display: grid; gap: 12px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .06em; }
+  textarea, input, select { width: 100%; font: inherit; color: var(--fg); background: var(--field); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+  textarea { min-height: 280px; font: 14px/1.6 var(--mono); resize: vertical; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 520px) { .opts { grid-template-columns: 1fr; } }
+  button { font: 600 15px/1 var(--body); background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 6px; padding: 11px 16px; cursor: pointer; }
+  button:hover:not(:disabled) { filter: brightness(1.08); }
+  button:disabled { opacity: .45; cursor: default; }
+  .head { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .head h2 { font: 700 24px/1.1 var(--display); text-transform: uppercase; letter-spacing: .02em; margin: 0; min-width: 0; overflow-wrap: anywhere; }
+  #status { color: var(--muted); font-size: 13px; }
+  ol.steps { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  ol.steps li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 10px; padding: 9px 10px; border-bottom: 1px solid var(--line); align-items: baseline; }
+  ol.steps li.rest { background: var(--rest); color: var(--muted); }
+  ol.steps li.repeat { color: var(--repeat); font-weight: 600; }
+  .n { color: var(--muted); font: 12px var(--mono); font-variant-numeric: tabular-nums; }
+  .dur { font: 500 14px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .note { display: block; color: var(--muted); font-size: 12px; }
+  .tag { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-left: 6px; font-weight: 600; }
+  .warn { background: var(--warn-bg); color: var(--warn-fg); border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+  .warn:empty { display: none; }
+  #saveMsg { font-size: 13px; color: var(--muted); }
+  #saveMsg:empty { display: none; }
+  summary { cursor: pointer; font-weight: 600; }
+  details ul, details ol { padding-left: 20px; margin: 8px 0 0; display: grid; gap: 4px; }
+  details p { margin: 8px 0 0; color: var(--muted); font-size: 13px; max-width: 65ch; }
+  code { font: 13px var(--mono); background: var(--rest); padding: 1px 4px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<main>
+  <header>
+    <h1>Workout to FIT</h1>
+    <p>Paste a workout note, check the steps, and download a Garmin workout file you can load onto your watch.</p>
+  </header>
+  <div class="grid">
+    <section class="panel">
+      <div>
+        <label for="text">Workout note</label>
+        <textarea id="text" spellcheck="false">2x 200m run -30s rest between rounds
+
+3 X 12 dumbbell curls
+4 x 8 ez bar french press (standing)
+
+60s row</textarea>
+      </div>
+      <div class="opts">
+        <div><label for="title">Workout name</label><input id="title" placeholder="Workout"></div>
+        <div><label for="sport">Workout type</label>
+          <select id="sport">
+            <option value="strength">Strength</option>
+            <option value="cardio">Cardio</option>
+            <option value="hiit">HIIT</option>
+            <option value="running">Running</option>
+          </select></div>
+        <div><label for="setRest">Rest between sets</label>
+          <select id="setRest">
+            <option value="open">Lap button</option>
+            <option value="none">None</option>
+            <option value="30000">30 s</option>
+            <option value="60000">60 s</option>
+            <option value="90000">90 s</option>
+            <option value="120000">2 min</option>
+          </select></div>
+      </div>
+      <details>
+        <summary>What you can write</summary>
+        <ul>
+          <li><code>3 x 12 dumbbell curls</code> → 3 sets of 12 reps</li>
+          <li><code>2x 200m run - 30s rest</code> → repeat 2× (run 200 m, rest 30 s)</li>
+          <li><code>60s row</code>, <code>plank 45s</code>, <code>5 min bike</code>, <code>1:30 jump rope</code> → timed steps</li>
+          <li><code>400m walk</code>, <code>1 km run</code>, <code>0.5 mi jog</code> → distance steps (a bare <code>m</code> under 50 means minutes)</li>
+          <li><code>5x5 back squat @ 185lb 2 min rest</code> → weight and rest</li>
+          <li><code>rest 2 min</code> on its own line → a rest step</li>
+          <li><code>warm up 5 min bike</code> or <code>cool down 400m walk</code></li>
+          <li><code>3 rounds: 60s rest</code>, then exercises on the lines below it until a blank line → a circuit</li>
+          <li><code># Leg Day</code> → workout name</li>
+        </ul>
+      </details>
+    </section>
+    <section class="panel">
+      <div class="head">
+        <h2 id="wname">Steps</h2>
+        <button id="dl" disabled>Download</button>
+      </div>
+      <div id="status">Loading Garmin's FIT library…</div>
+      <div id="saveMsg"></div>
+      <ol class="steps" id="steps"></ol>
+      <div class="warn" id="warn"></div>
+      <details>
+        <summary>Getting it onto your watch</summary>
+        <ol>
+          <li id="unzipStep" hidden>Unzip the download to get the <code>.fit</code> file.</li>
+          <li>Plug the watch into your computer with its USB cable.</li>
+          <li>Copy the <code>.fit</code> file into the watch's <code>GARMIN/NewFiles</code> folder.</li>
+          <li>Unplug. The workout appears under <b>Training → Workouts</b> on the watch.</li>
+        </ol>
+        <p>Garmin Connect's website only imports activities, not workout files, so copying over USB is the supported route. Workouts added this way stay on the watch and don't appear in your Garmin Connect workout library.</p>
+      </details>
+    </section>
+  </div>
+</main>
+<script type="module">
+import * as sdk from 'https://cdn.jsdelivr.net/npm/@garmin/fitsdk@21.218.0/+esm';
+const { Profile } = sdk;
+
+// ---- Workout text -> FIT (core logic; shared by the HTML tool and node tests) ----
+
+// Synonyms rewritten before exercise matching.
+const SYNONYMS = [
+  [/\bfrench press(es)?\b/g, 'overhead triceps extension'],
+  [/\bskull ?crushers?\b/g, 'lying triceps extension'],
+  [/\bez[- ]?bar\b/g, 'ez bar'],
+  [/\bdb\b/g, 'dumbbell'],
+  [/\bdbs\b/g, 'dumbbell'],
+  [/\bkb\b/g, 'kettlebell'],
+  [/\bbb\b/g, 'barbell'],
+  [/\btricep\b/g, 'triceps'],
+  [/\bbicep\b/g, 'biceps'],
+  [/\bpush[- ]ups?\b/g, 'push up'],
+  [/\bpull[- ]ups?\b/g, 'pull up'],
+  [/\bsit[- ]ups?\b/g, 'sit up'],
+  [/\bchin[- ]ups?\b/g, 'chin up'],
+  [/\bburpees?\b/g, 'burpee'],
+  [/\bjumping jacks?\b/g, 'jumping jacks'],
+];
+
+// Words that describe how/where, not which exercise; ignored for matching but kept in notes.
+const NOISE = new Set(['of', 'the', 'a', 'with', 'and', 'on', 'each', 'side', 'per', 'arm', 'leg', 'reps', 'rep', 'x', 'sets', 'set']);
+
+// Plain cardio words map straight to a category/name.
+const CARDIO = [
+  { re: /^(row|rows|rowing|erg|rower|row erg|rowing machine|indoor row)$/, cat: 'indoorRow', name: 'rowingMachine', label: 'Row' },
+  { re: /^(run|running|jog|jogging)$/, cat: 'run', name: 'run', label: 'Run' },
+  { re: /^(sprint|sprints)$/, cat: 'run', name: 'sprint', label: 'Sprint' },
+  { re: /^(walk|walking)$/, cat: 'run', name: 'walk', label: 'Walk' },
+  { re: /^(bike|biking|cycle|cycling|spin|assault bike|air bike)$/, cat: 'indoorBike', name: null, label: 'Bike' },
+  { re: /^(ski|ski erg|skierg)$/, cat: 'cardio', name: null, label: 'Ski Erg' },
+  { re: /^(jump rope|skipping|skip)$/, cat: 'cardio', name: 'jumpRope', label: 'Jump Rope' },
+];
+
+const camelWords = (s) => s.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase().split(' ');
+const stem = (w) => (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w);
+const titleCase = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+
+let exerciseIndex = null;
+function buildExerciseIndex(Profile) {
+  if (exerciseIndex) return exerciseIndex;
+  const t = Profile.types;
+  const cats = Object.entries(t.exerciseCategory).filter(([, v]) => v !== 'unknown');
+  exerciseIndex = [];
+  for (const [catNum, cat] of cats) {
+    const names = t[cat + 'ExerciseName'];
+    if (!names) continue;
+    for (const [num, name] of Object.entries(names)) {
+      if (/wheelchair/i.test(name)) continue;
+      const words = camelWords(name).map(stem);
+      exerciseIndex.push({ cat, catNum: +catNum, name, num: +num, words, catWords: camelWords(cat).map(stem) });
+    }
+  }
+  return exerciseIndex;
+}
+
+// Find the best Garmin exercise for a free-text description.
+function matchExercise(text, Profile) {
+  let s = ' ' + text.toLowerCase().replace(/[()]/g, ' ') + ' ';
+  for (const [re, rep] of SYNONYMS) s = s.replace(re, rep);
+  if (/\bcurls?\b/.test(s) && !/biceps|hammer|wrist|leg|preacher|zottman|reverse|concentration|spider|drag/.test(s)) s = s.replace(/\bcurls?\b/, 'biceps curl');
+  s = s.replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  for (const c of CARDIO) {
+    if (c.re.test(s)) {
+      const t = Profile.types;
+      const catNum = +Object.keys(t.exerciseCategory).find((k) => t.exerciseCategory[k] === c.cat);
+      const names = t[c.cat + 'ExerciseName'] || {};
+      const num = c.name ? Object.keys(names).find((k) => names[k] === c.name) : undefined;
+      return { cat: c.cat, catNum, name: c.name, num: num != null ? +num : undefined, label: c.label, cardio: true };
+    }
+  }
+
+  const words = s.split(' ').filter((w) => w && !NOISE.has(w)).map(stem);
+  if (!words.length) return null;
+  let best = null;
+  for (const e of buildExerciseIndex(Profile)) {
+    let hits = 0;
+    for (const w of words) if (e.words.includes(w)) hits++;
+    if (!hits) continue;
+    const catHit = words.some((w) => e.catWords.includes(w)) ? 0.5 : 0;
+    const extra = e.words.filter((w) => !words.includes(w)).length;
+    const score = hits * 2 + catHit - extra * 0.35;
+    if (!best || score > best.score) best = { ...e, score, hits };
+  }
+  if (!best || best.hits < Math.min(2, words.length)) return null;
+  return { cat: best.cat, catNum: best.catNum, name: best.name, num: best.num, label: titleCase(camelWords(best.name).join(' ')) };
+}
+
+// ---------------- Parsing ----------------
+
+const NUM = '(\\d+(?:\\.\\d+)?)';
+const TIME_RE = new RegExp(`^${NUM}\\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes|h|hr|hrs|hour|hours)\\b`, 'i');
+const DIST_RE = new RegExp(`^${NUM}\\s*(m|meter|meters|metre|metres|km|k|mi|mile|miles|yd|yds|yard|yards)\\b`, 'i');
+
+function toMs(n, unit) {
+  unit = unit.toLowerCase();
+  if (unit.startsWith('h')) return n * 3600000;
+  if (unit.startsWith('m')) return n * 60000;
+  return n * 1000;
+}
+function toCm(n, unit) {
+  unit = unit.toLowerCase();
+  if (unit === 'km' || unit === 'k') return n * 100000;
+  if (unit.startsWith('mi')) return n * 160934.4;
+  if (unit.startsWith('y')) return n * 91.44;
+  return n * 100;
+}
+const clockRe = /^(\d{1,2}):(\d{2})\b/;
+
+// Parse a leading amount: time, distance, or clock-style mm:ss.
+function parseAmount(s) {
+  let m;
+  if ((m = s.match(clockRe))) return { kind: 'time', value: (+m[1] * 60 + +m[2]) * 1000, rest: s.slice(m[0].length) };
+  // "200m" is ambiguous with minutes: treat bare "m" as meters only when >= 50, else minutes.
+  if ((m = s.match(DIST_RE)) && !(m[2].toLowerCase() === 'm' && +m[1] < 50))
+    return { kind: 'distance', value: toCm(+m[1], m[2]), rest: s.slice(m[0].length) };
+  if ((m = s.match(TIME_RE))) return { kind: 'time', value: toMs(+m[1], m[2]), rest: s.slice(m[0].length) };
+  return null;
+}
+
+// Pull a "<time> rest" clause out of a line. Returns { rest: ms|null, text }.
+function extractRest(text) {
+  const re = /[-,;/(]*\s*(?:rest\s*(\d+(?:\.\d+)?|\d{1,2}:\d{2})\s*([a-z]*)|(\d+(?:\.\d+)?|\d{1,2}:\d{2})\s*([a-z]*)\s*(?:rest|recovery|break|off))\b[^,;)]*\)?/i;
+  const m = text.match(re);
+  if (!m) return { rest: null, text };
+  const raw = m[1] || m[3];
+  const unit = (m[2] || m[4] || 's').toLowerCase();
+  let ms;
+  if (raw.includes(':')) { const [a, b] = raw.split(':'); ms = (+a * 60 + +b) * 1000; }
+  else ms = toMs(+raw, unit || 's');
+  return { rest: ms, text: (text.slice(0, m.index) + ' ' + text.slice(m.index + m[0].length)).trim() };
+}
+
+// One line of text -> a block: { sets, rest, steps: [...] , warnings }
+function parseLine(line, Profile, opts = {}) {
+  const original = line.trim();
+  let s = original.replace(/^(?:[-*•]+|\d+[.)])\s+/, '');
+  const warnings = [];
+  let intensity = 'active';
+  if (/^(warm[- ]?up|wu)\b[:\s-]*/i.test(s)) { intensity = 'warmup'; s = s.replace(/^(warm[- ]?up|wu)\b[:\s-]*/i, ''); }
+  else if (/^(cool[- ]?down|cd)\b[:\s-]*/i.test(s)) { intensity = 'cooldown'; s = s.replace(/^(cool[- ]?down|cd)\b[:\s-]*/i, ''); }
+
+  // Standalone rest line: "rest 2 min", "2 min rest"
+  const standalone = s.match(/^(?:rest\s*(.+)|(.+?)\s*(?:rest|recovery|break))$/i);
+  if (standalone) {
+    const amt = parseAmount((standalone[1] || standalone[2]).trim());
+    if (amt && amt.kind === 'time' && !amt.rest.trim())
+      return { sets: 1, rest: null, steps: [{ type: 'rest', durationType: 'time', value: amt.value, label: 'Rest' }], warnings, source: original };
+  }
+  if (/^rest$/i.test(s)) return { sets: 1, rest: null, steps: [{ type: 'rest', durationType: 'open', label: 'Rest' }], warnings, source: original };
+
+  const r = extractRest(s);
+  s = r.text;
+
+  // Sets x reps: "3 x 12 curls", "3x12", "2x 200m run", "3 sets of 10 squats"
+  let sets = 1, reps = null, amount = null, m;
+  if ((m = s.match(/^(\d+)\s*(?:x|×|\*|sets?\s*(?:of|x)?)\s*/i))) {
+    sets = +m[1];
+    s = s.slice(m[0].length);
+  }
+  if ((m = s.match(/^(\d+)\s*(?:x|×)\s*/i))) { // "3 x 12 x 20lb"? treat second x as reps
+    reps = +m[1];
+    s = s.slice(m[0].length);
+  }
+  if (reps == null) {
+    const a = parseAmount(s);
+    if (a) { amount = a; s = a.rest; }
+    else if ((m = s.match(/^(\d+)\s*(?:reps?\b)?\s*/i))) { reps = +m[1]; s = s.slice(m[0].length); }
+  }
+  // Trailing amount: "plank 60s", "curls x 12", "run 200m"
+  if (reps == null && !amount) {
+    if ((m = s.match(/\s(?:x|×)\s*(\d+)\s*(?:reps?)?\s*$/i))) { reps = +m[1]; s = s.slice(0, m.index); }
+    else if ((m = s.match(/\s(\d+)\s*reps?\s*$/i))) { reps = +m[1]; s = s.slice(0, m.index); }
+    else {
+      const t = s.match(/\s((?:\d+(?:\.\d+)?\s*[a-z]+|\d{1,2}:\d{2}))\s*$/i);
+      const a = t && parseAmount(t[1]);
+      if (a && !a.rest.trim()) { amount = a; s = s.slice(0, t.index); }
+    }
+  }
+  // Weight: "@ 25lb", "25 lbs", "20kg"
+  let weight = null;
+  if ((m = s.match(/@?\s*(\d+(?:\.\d+)?)\s*(lb|lbs|pound|pounds|kg|kgs|kilo|kilos)\b/i))) {
+    weight = { value: +m[1], unit: /^k/i.test(m[2]) ? 'kilogram' : 'pound' };
+    s = (s.slice(0, m.index) + s.slice(m.index + m[0].length)).trim();
+  }
+  s = s.replace(/^\s*(?:of|reps?)\s+/i, '').replace(/[-–—,:;]+\s*$/, '').trim();
+  const qualifiers = (s.match(/\(([^)]*)\)/g) || []).map((q) => q.slice(1, -1).trim());
+  const name = s.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+
+  if (!name && !reps && !amount) return null;
+  const ex = name ? matchExercise(name, Profile) : null;
+  if (name && !ex) warnings.push(`No Garmin exercise matched "${name}" — it will show by name only.`);
+  if (!reps && !amount) warnings.push(`No reps/time/distance found for "${original}" — step ends with the lap button.`);
+
+  const step = {
+    type: 'exercise',
+    label: titleCase(name) || (ex && ex.label) || 'Exercise',
+    exercise: ex,
+    intensity,
+    notes: [qualifiers.join(', '), ex && ex.label.toLowerCase() !== name.toLowerCase() ? `Garmin: ${ex.label}` : ''].filter(Boolean).join(' · '),
+    weight,
+  };
+  if (reps != null) Object.assign(step, { durationType: 'reps', value: reps });
+  else if (amount) Object.assign(step, { durationType: amount.kind, value: amount.value });
+  else step.durationType = 'open';
+
+  return { sets, rest: r.rest, steps: [step], warnings, source: original };
+}
+
+// Circuit header: "3 rounds:", "3x:", "4 rounds of:" — following lines until a blank line repeat together.
+const ROUNDS_RE = /^(\d+)\s*(?:rounds?|x|\u00d7|times|sets)\b\s*(?:of)?\s*:?\s*(.*)$/i;
+
+function parseWorkout(text, Profile, opts = {}) {
+  const lines = text.split(/\r?\n/);
+  const blocks = [];
+  let title = null;
+  let group = null;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { group = null; continue; }
+    if (/^(#|title:|name:)/i.test(line)) { title = line.replace(/^(#+|title:|name:)\s*/i, '').trim(); continue; }
+    const rm = line.match(ROUNDS_RE);
+    const r = rm && extractRest(rm[2].replace(/[()]/g, ' '));
+    if (rm && !r.text.replace(/[^a-z0-9]/gi, '')) {
+      group = { sets: +rm[1], rest: r.rest, steps: [], warnings: [], source: line, circuit: true };
+      blocks.push(group);
+      continue;
+    }
+    const b = parseLine(line, Profile, opts);
+    if (!b) { if (!title && !blocks.length) title = line; continue; }
+    if (group) {
+      // Garmin watches don't support nested repeats, so inner sets are written out in full.
+      if (b.sets > 1) b.warnings.push(`"${b.source}" is inside a circuit, so its ${b.sets} sets are listed one after another.`);
+      for (let i = 0; i < b.sets; i++) {
+        group.steps.push(...b.steps);
+        if (b.rest != null && (i < b.sets - 1 || b.sets === 1)) group.steps.push({ type: 'rest', durationType: 'time', value: b.rest, label: 'Rest' });
+      }
+      group.warnings.push(...b.warnings);
+    } else blocks.push(b);
+  }
+  return { title: opts.title || title || 'Workout', blocks: blocks.filter((b) => b.steps.length) };
+}
+
+// Flatten blocks to FIT workout_step records.
+// opts.setRest: 'open' | 'none' | number(ms) – rest inserted between sets when none is given.
+function toFitSteps(workout, opts = {}) {
+  const setRest = opts.setRest ?? 'open';
+  const steps = [];
+  const push = (s) => { s.messageIndex = steps.length; steps.push(s); return s; };
+
+  const exerciseStep = (st) => {
+    const out = {
+      wktStepName: st.label.slice(0, 50),
+      durationType: st.durationType,
+      targetType: 'open',
+      intensity: st.type === 'rest' ? 'rest' : st.intensity || 'active',
+    };
+    if (st.durationType === 'time') out.durationValue = Math.round(st.value);
+    else if (st.durationType === 'distance') out.durationValue = Math.round(st.value);
+    else if (st.durationType === 'reps') out.durationValue = st.value;
+    if (st.notes) out.notes = st.notes.slice(0, 100);
+    if (st.exercise) {
+      out.exerciseCategory = st.exercise.catNum;
+      if (st.exercise.num != null) out.exerciseName = st.exercise.num;
+    }
+    if (st.weight) { out.exerciseWeight = st.weight.value; out.weightDisplayUnit = st.weight.unit; }
+    return out;
+  };
+  const restStep = (ms) => ({
+    wktStepName: 'Rest',
+    durationType: ms === 'open' ? 'open' : 'time',
+    ...(ms === 'open' ? {} : { durationValue: Math.round(ms) }),
+    targetType: 'open',
+    intensity: 'rest',
+  });
+
+  for (const b of workout.blocks) {
+    const start = steps.length;
+    for (const st of b.steps) push(st.type === 'rest' ? restStep(st.durationType === 'open' ? 'open' : st.value) : exerciseStep(st));
+    const isRestOnly = b.steps.every((s) => s.type === 'rest');
+    if (b.sets > 1) {
+      const rest = b.rest ?? (setRest === 'none' || b.circuit ? null : setRest);
+      if (rest != null) push(restStep(rest));
+      push({ durationType: 'repeatUntilStepsCmplt', durationValue: start, targetValue: b.sets, targetType: 'open', intensity: 'active' });
+    } else if (b.rest != null && !isRestOnly) {
+      push(restStep(b.rest));
+    }
+  }
+  return steps;
+}
+
+const SPORTS = {
+  strength: { sport: 'training', subSport: 'strengthTraining', label: 'Strength' },
+  cardio: { sport: 'training', subSport: 'cardioTraining', label: 'Cardio' },
+  hiit: { sport: 'hiit', subSport: 'hiit', label: 'HIIT' },
+  running: { sport: 'running', subSport: 'generic', label: 'Running' },
+};
+
+function encodeFit(workout, sdk, opts = {}) {
+  const { Encoder, Profile } = sdk;
+  const sport = SPORTS[opts.sport || 'strength'];
+  const steps = toFitSteps(workout, opts);
+  const enc = new Encoder();
+  enc.onMesg(Profile.MesgNum.FILE_ID, {
+    type: 'workout',
+    manufacturer: 'development',
+    product: 0,
+    serialNumber: Math.floor(Math.random() * 0xfffffff) + 1,
+    timeCreated: new Date(),
+  });
+  enc.onMesg(Profile.MesgNum.WORKOUT, {
+    wktName: workout.title.slice(0, 40),
+    sport: sport.sport,
+    subSport: sport.subSport,
+    numValidSteps: steps.length,
+  });
+  for (const s of steps) enc.onMesg(Profile.MesgNum.WORKOUT_STEP, s);
+  return { bytes: enc.close(), steps };
+}
+
+// Human-readable summary of FIT steps (used for the preview).
+function describeSteps(steps) {
+  const fmtTime = (ms) => { const s = Math.round(ms / 1000); return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : `${s}s`; };
+  const fmtDist = (cm) => (cm >= 100000 ? `${+(cm / 100000).toFixed(2)} km` : `${Math.round(cm / 100)} m`);
+  return steps.map((s) => {
+    let dur;
+    if (s.durationType === 'repeatUntilStepsCmplt') return { idx: s.messageIndex, repeat: true, text: `Repeat from step ${s.durationValue + 1} × ${s.targetValue}` };
+    if (s.durationType === 'time') dur = fmtTime(s.durationValue);
+    else if (s.durationType === 'distance') dur = fmtDist(s.durationValue);
+    else if (s.durationType === 'reps') dur = `${s.durationValue} reps`;
+    else dur = 'lap button';
+    return { idx: s.messageIndex, name: s.wktStepName, dur, intensity: s.intensity, notes: s.notes, weight: s.exerciseWeight != null ? `${s.exerciseWeight} ${s.weightDisplayUnit === 'kilogram' ? 'kg' : 'lb'}` : '' };
+  });
+}
+
+
+// Minimal stored (uncompressed) ZIP, used when the host only allows .zip downloads.
+const CRC_TABLE = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+function crc32(bytes) { let c = 0xffffffff; for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+function zipOne(name, data) {
+  const nameBytes = new TextEncoder().encode(name);
+  const crc = crc32(data), d = new Date();
+  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  const out = new Uint8Array(30 + nameBytes.length + data.length + 46 + nameBytes.length + 22);
+  const v = new DataView(out.buffer);
+  let p = 0;
+  const u32 = (x) => { v.setUint32(p, x, true); p += 4; }, u16 = (x) => { v.setUint16(p, x, true); p += 2; };
+  u32(0x04034b50); u16(20); u16(0x0800); u16(0); u16(time); u16(date); u32(crc); u32(data.length); u32(data.length); u16(nameBytes.length); u16(0);
+  out.set(nameBytes, p); p += nameBytes.length; out.set(data, p); p += data.length;
+  const cdStart = p;
+  u32(0x02014b50); u16(20); u16(20); u16(0x0800); u16(0); u16(time); u16(date); u32(crc); u32(data.length); u32(data.length); u16(nameBytes.length); u16(0); u16(0); u16(0); u16(0); u32(0); u32(0);
+  out.set(nameBytes, p); p += nameBytes.length;
+  const cdSize = p - cdStart;
+  u32(0x06054b50); u16(0); u16(0); u16(1); u16(1); u32(cdSize); u32(cdStart); u16(0);
+  return out;
+}
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const inArtifact = typeof window.claude?.use === 'function';
+let downloads = null;
+let current = null;
+
+if (inArtifact) {
+  $('dl').textContent = 'Download .zip';
+  $('unzipStep').hidden = false;
+  window.claude.use('downloads').then((d) => {
+    downloads = d;
+    if (!d) { $('dl').hidden = true; $('saveMsg').textContent = 'Downloads aren’t available in this view. Open the page in a browser to save the file.'; }
+  });
+} else {
+  $('dl').textContent = 'Download .fit';
+}
+
+function render() {
+  const setRestVal = $('setRest').value;
+  const opts = { title: $('title').value.trim() || undefined, sport: $('sport').value, setRest: /^\d+$/.test(setRestVal) ? +setRestVal : setRestVal };
+  $('saveMsg').textContent = '';
+  try {
+    const w = parseWorkout($('text').value, Profile, opts);
+    if (!w.blocks.length) { $('steps').innerHTML = ''; $('status').textContent = 'Type a workout on the left to see its steps here.'; $('dl').disabled = true; $('warn').textContent = ''; current = null; return; }
+    const { bytes, steps } = encodeFit(w, sdk, opts);
+    current = { bytes, title: w.title };
+    $('wname').textContent = w.title;
+    $('status').textContent = `${steps.length} steps · ${SPORTS[opts.sport].label} workout`;
+    $('steps').innerHTML = describeSteps(steps).map((d) => d.repeat
+      ? `<li class="repeat"><span class="n">${d.idx + 1}</span><span>↻ ${esc(d.text)}</span><span></span></li>`
+      : `<li class="${d.intensity === 'rest' ? 'rest' : ''}"><span class="n">${d.idx + 1}</span><span>${esc(d.name)}${d.intensity !== 'active' && d.intensity !== 'rest' ? `<span class="tag">${esc(d.intensity)}</span>` : ''}${d.notes ? `<span class="note">${esc(d.notes)}</span>` : ''}</span><span class="dur">${esc(d.dur)}${d.weight ? ` · ${esc(d.weight)}` : ''}</span></li>`).join('');
+    $('warn').innerHTML = w.blocks.flatMap((b) => b.warnings).map(esc).join('<br>');
+    $('dl').disabled = false;
+  } catch (e) {
+    console.error(e);
+    $('status').textContent = 'Could not build the file: ' + e.message;
+    $('dl').disabled = true;
+  }
+}
+
+$('dl').addEventListener('click', async () => {
+  if (!current) return;
+  const base = current.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'workout';
+  if (inArtifact) {
+    if (!downloads) return;
+    try {
+      await downloads.save({ filename: base + '.zip', data: zipOne(base + '.fit', current.bytes) });
+      $('saveMsg').textContent = `Saved ${base}.zip. Unzip it and copy ${base}.fit to your watch.`;
+    } catch (e) {
+      $('saveMsg').textContent = e?.code === 'declined' ? 'Download cancelled.' : e?.code === 'rate_limited' ? 'A save prompt is already open. Finish that one first.' : 'This view can’t save files. Open the page in a browser and try again.';
+    }
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([current.bytes], { type: 'application/octet-stream' }));
+  a.download = base + '.fit';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+for (const id of ['text', 'title', 'sport', 'setRest']) $(id).addEventListener('input', render);
+render();
+</script>
+
+</body>
+</html>
