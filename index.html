@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Workout to FIT</title>
+<title>Faith's FIT Builder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -11,7 +11,7 @@
   :root {
     --bg: #eef1ee; --panel: #fbfcfb; --fg: #18201c; --muted: #5b6a62; --line: #d5ddd8;
     --accent: #0f7a52; --accent-fg: #ffffff; --rest: #e6ece8; --repeat: #0f7a52;
-    --warn-bg: #fbf1d6; --warn-fg: #6d4f00; --field: #f4f7f5;
+    --warn-bg: #fbf1d6; --hr: #b4233c; --warn-fg: #6d4f00; --field: #f4f7f5;
     --display: "Barlow Condensed", "Arial Narrow", sans-serif;
     --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
@@ -20,13 +20,13 @@
     :root:not([data-theme="light"]) {
       --bg: #101513; --panel: #171d1a; --fg: #e4ebe7; --muted: #94a59c; --line: #2a332e;
       --accent: #3fc48d; --accent-fg: #07130d; --rest: #1d2521; --repeat: #5fd3a2;
-      --warn-bg: #352b10; --warn-fg: #f3d27c; --field: #121815; color-scheme: dark;
+      --warn-bg: #352b10; --hr: #ff8a98; --warn-fg: #f3d27c; --field: #121815; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #101513; --panel: #171d1a; --fg: #e4ebe7; --muted: #94a59c; --line: #2a332e;
     --accent: #3fc48d; --accent-fg: #07130d; --rest: #1d2521; --repeat: #5fd3a2;
-    --warn-bg: #352b10; --warn-fg: #f3d27c; --field: #121815; color-scheme: dark;
+    --warn-bg: #352b10; --hr: #ff8a98; --warn-fg: #f3d27c; --field: #121815; color-scheme: dark;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); }
@@ -54,6 +54,7 @@
   ol.steps li.repeat { color: var(--repeat); font-weight: 600; }
   .n { color: var(--muted); font: 12px var(--mono); font-variant-numeric: tabular-nums; }
   .dur { font: 500 14px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .hr { display: block; text-align: right; font: 500 12px var(--mono); color: var(--hr); }
   .note { display: block; color: var(--muted); font-size: 12px; }
   .tag { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin-left: 6px; font-weight: 600; }
   .warn { background: var(--warn-bg); color: var(--warn-fg); border-radius: 6px; padding: 8px 10px; font-size: 13px; }
@@ -70,7 +71,7 @@
 <body>
 <main>
   <header>
-    <h1>Workout to FIT</h1>
+    <h1>Faith's FIT Builder</h1>
     <p>Paste a workout note, check the steps, and download a Garmin workout file you can load onto your watch.</p>
   </header>
   <div class="grid">
@@ -88,6 +89,7 @@
         <div><label for="title">Workout name</label><input id="title" placeholder="Workout"></div>
         <div><label for="sport">Workout type</label>
           <select id="sport">
+            <option value="auto">Auto</option>
             <option value="strength">Strength</option>
             <option value="cardio">Cardio</option>
             <option value="hiit">HIIT</option>
@@ -111,6 +113,9 @@
           <li><code>60s row</code>, <code>plank 45s</code>, <code>5 min bike</code>, <code>1:30 jump rope</code> → timed steps</li>
           <li><code>400m walk</code>, <code>1 km run</code>, <code>0.5 mi jog</code> → distance steps (a bare <code>m</code> under 50 means minutes)</li>
           <li><code>5x5 back squat @ 185lb 2 min rest</code> → weight and rest</li>
+          <li><code>400m Z1 run</code>, <code>zone 3</code> → heart rate zone target (zones from your Garmin settings)</li>
+          <li><code>6x800m run at 82% HR</code> → 80–84% of max HR; <code>75-80% max HR</code> for an exact range</li>
+          <li><code>4 x 1 km run @ 160-170 bpm</code> → heart rate in bpm (a single bpm value gets ±5)</li>
           <li><code>rest 2 min</code> on its own line → a rest step</li>
           <li><code>warm up 5 min bike</code> or <code>cool down 400m walk</code></li>
           <li><code>3 rounds: 60s rest</code>, then exercises on the lines below it until a blank line → a circuit</li>
@@ -279,6 +284,28 @@ function extractRest(text) {
   return { rest: ms, text: (text.slice(0, m.index) + ' ' + text.slice(m.index + m[0].length)).trim() };
 }
 
+// Pull a heart-rate target out of a line: "Z2", "zone 3", "82% HR", "75-80% max HR", "140-150 bpm".
+// Returns { hr: {zone} | {low, high, unit: 'percent'|'bpm'} | null, text }.
+// A single % or bpm value becomes a small range around it, since Garmin targets are ranges.
+const HR_SPREAD = { percent: 2, bpm: 5 };
+function extractHr(text) {
+  const cut = (m) => (text.slice(0, m.index) + ' ' + text.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim();
+  const lead = String.raw`(?:\s*(?:@|at|in)\s*)?`;
+  let m = text.match(new RegExp(lead + String.raw`\b(?:hr\s*)?(?:z|zone)\s*([1-5])\b(?:\s*(?:hr|heart rate))?`, 'i'));
+  if (m) return { hr: { zone: +m[1] }, text: cut(m) };
+  m = text.match(new RegExp(lead + String.raw`(\d{2,3})(?:\s*%?\s*[-–to]+\s*(\d{2,3}))?\s*%\s*(?:of\s*)?(?:max(?:imum)?\s*)?(?:hr|heart\s*rate|mhr|max)\b(?:\s*max)?`, 'i'));
+  if (m) {
+    const [lo, hi] = m[2] ? [+m[1], +m[2]].sort((a, b) => a - b) : [+m[1] - HR_SPREAD.percent, +m[1] + HR_SPREAD.percent];
+    return { hr: { low: Math.max(1, lo), high: Math.min(100, hi), unit: 'percent' }, text: cut(m) };
+  }
+  m = text.match(new RegExp(lead + String.raw`(\d{2,3})(?:\s*[-–to]+\s*(\d{2,3}))?\s*bpm\b(?:\s*(?:hr|heart rate))?`, 'i'));
+  if (m) {
+    const [lo, hi] = m[2] ? [+m[1], +m[2]].sort((a, b) => a - b) : [+m[1] - HR_SPREAD.bpm, +m[1] + HR_SPREAD.bpm];
+    return { hr: { low: lo, high: hi, unit: 'bpm' }, text: cut(m) };
+  }
+  return { hr: null, text };
+}
+
 // One line of text -> a block: { sets, rest, steps: [...] , warnings }
 function parseLine(line, Profile, opts = {}) {
   const original = line.trim();
@@ -299,6 +326,8 @@ function parseLine(line, Profile, opts = {}) {
 
   const r = extractRest(s);
   s = r.text;
+  const h = extractHr(s);
+  s = h.text;
 
   // Sets x reps: "3 x 12 curls", "3x12", "2x 200m run", "3 sets of 10 squats"
   let sets = 1, reps = null, amount = null, m;
@@ -347,6 +376,7 @@ function parseLine(line, Profile, opts = {}) {
     intensity,
     notes: [qualifiers.join(', '), ex && ex.label.toLowerCase() !== name.toLowerCase() ? `Garmin: ${ex.label}` : ''].filter(Boolean).join(' · '),
     weight,
+    hr: h.hr,
   };
   if (reps != null) Object.assign(step, { durationType: 'reps', value: reps });
   else if (amount) Object.assign(step, { durationType: amount.kind, value: amount.value });
@@ -393,6 +423,7 @@ function parseWorkout(text, Profile, opts = {}) {
 // opts.setRest: 'open' | 'none' | number(ms) – rest inserted between sets when none is given.
 function toFitSteps(workout, opts = {}) {
   const setRest = opts.setRest ?? 'open';
+  const runningSport = resolveSport(workout, opts) === 'running';
   const steps = [];
   const push = (s) => { s.messageIndex = steps.length; steps.push(s); return s; };
 
@@ -407,7 +438,18 @@ function toFitSteps(workout, opts = {}) {
     else if (st.durationType === 'distance') out.durationValue = Math.round(st.value);
     else if (st.durationType === 'reps') out.durationValue = st.value;
     if (st.notes) out.notes = st.notes.slice(0, 100);
-    if (st.exercise) {
+    if (st.hr) {
+      out.targetType = 'heartRate';
+      if (st.hr.zone) out.targetValue = st.hr.zone;
+      else {
+        // FIT custom HR: 0-100 means % of max HR, above 100 means bpm + 100.
+        const off = st.hr.unit === 'bpm' ? 100 : 0;
+        out.targetValue = 0;
+        out.customTargetValueLow = st.hr.low + off;
+        out.customTargetValueHigh = st.hr.high + off;
+      }
+    }
+    if (st.exercise && !runningSport) {
       out.exerciseCategory = st.exercise.catNum;
       if (st.exercise.num != null) out.exerciseName = st.exercise.num;
     }
@@ -444,9 +486,16 @@ const SPORTS = {
   running: { sport: 'running', subSport: 'generic', label: 'Running' },
 };
 
+// 'auto' picks Running when every exercise step is a run/walk, otherwise Strength.
+function resolveSport(workout, opts = {}) {
+  if (opts.sport && opts.sport !== 'auto') return opts.sport;
+  const ex = workout.blocks.flatMap((b) => b.steps).filter((st) => st.type !== 'rest');
+  return ex.length && ex.every((st) => st.exercise?.cat === 'run') ? 'running' : 'strength';
+}
+
 function encodeFit(workout, sdk, opts = {}) {
   const { Encoder, Profile } = sdk;
-  const sport = SPORTS[opts.sport || 'strength'];
+  const sport = SPORTS[resolveSport(workout, opts)];
   const steps = toFitSteps(workout, opts);
   const enc = new Encoder();
   enc.onMesg(Profile.MesgNum.FILE_ID, {
@@ -477,7 +526,13 @@ function describeSteps(steps) {
     else if (s.durationType === 'distance') dur = fmtDist(s.durationValue);
     else if (s.durationType === 'reps') dur = `${s.durationValue} reps`;
     else dur = 'lap button';
-    return { idx: s.messageIndex, name: s.wktStepName, dur, intensity: s.intensity, notes: s.notes, weight: s.exerciseWeight != null ? `${s.exerciseWeight} ${s.weightDisplayUnit === 'kilogram' ? 'kg' : 'lb'}` : '' };
+    let hr = '';
+    if (s.targetType === 'heartRate') {
+      if (s.targetValue) hr = `HR zone ${s.targetValue}`;
+      else if (s.customTargetValueLow > 100) hr = `${s.customTargetValueLow - 100}–${s.customTargetValueHigh - 100} bpm`;
+      else hr = `${s.customTargetValueLow}–${s.customTargetValueHigh}% max HR`;
+    }
+    return { idx: s.messageIndex, name: s.wktStepName, dur, hr, intensity: s.intensity, notes: s.notes, weight: s.exerciseWeight != null ? `${s.exerciseWeight} ${s.weightDisplayUnit === 'kilogram' ? 'kg' : 'lb'}` : '' };
   });
 }
 
@@ -531,10 +586,10 @@ function render() {
     const { bytes, steps } = encodeFit(w, sdk, opts);
     current = { bytes, title: w.title };
     $('wname').textContent = w.title;
-    $('status').textContent = `${steps.length} steps · ${SPORTS[opts.sport].label} workout`;
+    $('status').textContent = `${steps.length} steps · ${SPORTS[resolveSport(w, opts)].label} workout`;
     $('steps').innerHTML = describeSteps(steps).map((d) => d.repeat
       ? `<li class="repeat"><span class="n">${d.idx + 1}</span><span>↻ ${esc(d.text)}</span><span></span></li>`
-      : `<li class="${d.intensity === 'rest' ? 'rest' : ''}"><span class="n">${d.idx + 1}</span><span>${esc(d.name)}${d.intensity !== 'active' && d.intensity !== 'rest' ? `<span class="tag">${esc(d.intensity)}</span>` : ''}${d.notes ? `<span class="note">${esc(d.notes)}</span>` : ''}</span><span class="dur">${esc(d.dur)}${d.weight ? ` · ${esc(d.weight)}` : ''}</span></li>`).join('');
+      : `<li class="${d.intensity === 'rest' ? 'rest' : ''}"><span class="n">${d.idx + 1}</span><span>${esc(d.name)}${d.intensity !== 'active' && d.intensity !== 'rest' ? `<span class="tag">${esc(d.intensity)}</span>` : ''}${d.notes ? `<span class="note">${esc(d.notes)}</span>` : ''}</span><span class="dur">${esc(d.dur)}${d.weight ? ` · ${esc(d.weight)}` : ''}${d.hr ? `<span class="hr">♥ ${esc(d.hr)}</span>` : ''}</span></li>`).join('');
     $('warn').innerHTML = w.blocks.flatMap((b) => b.warnings).map(esc).join('<br>');
     $('dl').disabled = false;
   } catch (e) {
@@ -566,6 +621,5 @@ $('dl').addEventListener('click', async () => {
 for (const id of ['text', 'title', 'sport', 'setRest']) $(id).addEventListener('input', render);
 render();
 </script>
-
 </body>
 </html>
