@@ -9,24 +9,24 @@
 <style>
   /* Layout: two panels — the note on the left, the watch's step list on the right; stacks on phones. */
   :root {
-    --bg: #eef1ee; --panel: #fbfcfb; --fg: #18201c; --muted: #5b6a62; --line: #d5ddd8;
-    --accent: #0f7a52; --accent-fg: #ffffff; --rest: #e6ece8; --repeat: #0f7a52;
-    --warn-bg: #fbf1d6; --hr: #b4233c; --warn-fg: #6d4f00; --field: #f4f7f5;
+    --bg: #edddc6; --panel: #ffffff; --fg: #604d42; --muted: #7a6052; --line: #eadcc8; --edge: #967867;
+    --accent: #604d42; --accent-fg: #ffffff; --rest: #f8f1e7; --repeat: #604d42;
+    --warn-bg: #f8ebd3; --hr: #a3412f; --warn-fg: #6b4a1c; --field: #fdfaf5;
     --display: "Barlow Condensed", "Arial Narrow", sans-serif;
     --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #101513; --panel: #171d1a; --fg: #e4ebe7; --muted: #94a59c; --line: #2a332e;
-      --accent: #3fc48d; --accent-fg: #07130d; --rest: #1d2521; --repeat: #5fd3a2;
-      --warn-bg: #352b10; --hr: #ff8a98; --warn-fg: #f3d27c; --field: #121815; color-scheme: dark;
+      --bg: #2e2520; --panel: #3a2f29; --fg: #f3e9db; --muted: #c9b3a2; --line: #4d3f36; --edge: #967867;
+      --accent: #edddc6; --accent-fg: #604d42; --rest: #433630; --repeat: #edddc6;
+      --warn-bg: #4a3a20; --hr: #f2a28f; --warn-fg: #f3d9a4; --field: #332a24; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #101513; --panel: #171d1a; --fg: #e4ebe7; --muted: #94a59c; --line: #2a332e;
-    --accent: #3fc48d; --accent-fg: #07130d; --rest: #1d2521; --repeat: #5fd3a2;
-    --warn-bg: #352b10; --hr: #ff8a98; --warn-fg: #f3d27c; --field: #121815; color-scheme: dark;
+    --bg: #2e2520; --panel: #3a2f29; --fg: #f3e9db; --muted: #c9b3a2; --line: #4d3f36; --edge: #967867;
+    --accent: #edddc6; --accent-fg: #604d42; --rest: #433630; --repeat: #edddc6;
+    --warn-bg: #4a3a20; --hr: #f2a28f; --warn-fg: #f3d9a4; --field: #332a24; color-scheme: dark;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); }
@@ -35,7 +35,7 @@
   header p { color: var(--muted); margin: 0; max-width: 62ch; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
   @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; display: grid; gap: 12px; }
+  .panel { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 16px; min-width: 0; display: grid; gap: 12px; }
   label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .06em; }
   textarea, input, select { width: 100%; font: inherit; color: var(--fg); background: var(--field); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
   textarea { min-height: 280px; font: 14px/1.6 var(--mono); resize: vertical; }
